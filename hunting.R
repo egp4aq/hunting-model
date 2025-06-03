@@ -20,10 +20,26 @@
 hunting <- function(t, pop, pars) {
   with(as.list(c(pars, pop)), {
     
-    if(prey >= prey_thresh) beta * hunters * prey else 0
-    
-    dprey <- rprey * (1 - prey / K) * prey - alpha * prey * pred
+    if (prey < prey_thresh) {
+      hunting <- 0
+      } else {
+      hunting <- beta * hunters * prey
+    }
+      
+    dprey <- rprey * (1 - prey / K) * prey - alpha * prey * pred - hunting
     dpred <- eff * alpha * prey * pred - pmort * pred
     return(list(c(dprey, dpred)))
+    
   })
 }
+# lotvmod_hunting <- function(t, pop, pars) {
+#   with(as.list(c(pars, pop)), {
+#     
+#     hunting <- if (prey >= prey_thresh) beta * hunters * prey
+#     else 0 
+#     
+#     dprey <- rprey * (1 - prey / K) * prey - alpha * prey * pred - hunting
+#     dpred <- eff * alpha * prey * pred - pmort * pred
+#     return(list(c(dprey, dpred)))
+#   })
+# }
