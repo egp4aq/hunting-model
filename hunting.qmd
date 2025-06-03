@@ -11,9 +11,52 @@ library(here)
 library(dplyr)
 library(tidyverse)
 library(ggplot2)
+library(sensitivity)
+library(purrr)
+library(deSolve)
+library(lhs)
+
 ```
 
 ```{r}
-source(here('lotvmodK.R'))
+source(here('hunting.R'))
 ```
+
+```{r}
+# note the use of with
+# initial conditions
+currpop <- c(prey = 10, pred = 1)
+
+# time points to see results
+days <- seq(from = 1, to = 100, by = 1)
+
+# set parameters
+pars <- c(rprey = 0.95, alpha = 0.01, eff = 0.6, pmort = 0.4, K = 2000, beta = 0.5, hunters = 1, prey_thresh = 2)
+
+# run the model
+res <- ode(func = hunting, y = currpop, times = days, parms = pars)
+
+# graph the results
+head(res)
+# rearrange for easy plotting
+resl <- as.data.frame(res) %>% pivot_longer(-time, names_to = "animal", values_to = "pop")
+p1 <- ggplot(resl, aes(time, pop, col = animal)) +
+  geom_line()
+
+p1
+
+p2 <- ggplot(as.data.frame(res), aes(pred, prey)) +
+  geom_point() +
+  labs(y = "Prey", x = "Predators")
+p2
+
+# To make this easier to understand - maybe
+p2b <- ggplot(as.data.frame(res), aes(pred, prey, col = time)) +
+  geom_point() +
+  labs(y = "Prey", x = "Predators")
+p2b
+
+ggarrange(p1, p2b)
+```
+
 
