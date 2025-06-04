@@ -22,6 +22,8 @@ library(lhs)
 source(here('hunting.R'))
 ```
 
+
+
 ```{r}
 # note the use of with
 # initial conditions
@@ -35,6 +37,14 @@ pars <- c(rprey = 0.95, alpha = 0.01, eff = 0.6, pmort = 0.4, K = 2000, beta = 0
 
 # run the model
 res <- ode(func = hunting, y = currpop, times = days, parms = pars)
+
+# extract final values
+final <- as.data.frame(res) |>  tail(1)
+final
+
+# Assuming that 5 is a stable level?
+stability <- final$prey > 5 & final$pred > 5
+
 
 # graph the results
 head(res)
@@ -56,7 +66,16 @@ p2b <- ggplot(as.data.frame(res), aes(pred, prey, col = time)) +
   labs(y = "Prey", x = "Predators")
 p2b
 
-ggarrange(p1, p2b)
+ggpubr::ggarrange(p1, p2b)
 ```
+Using the hunting model, we tested different hunting levels using the beta and hunters parameters. Each simulation was run for 100 days using the `ode()` function from the `deSolve` package, with a consistent set of initial conditions:
+
+```{r}
+currpop <- c(prey = 10, pred = 1)
+```
+
+We define stability as both prey and predator populations remaining above 5 individuals at the end of the simulation (t=100). This ensures that both species avoid extinction. We tested this to see at the 100th day, if the populations were stable.
+
+
 
 
