@@ -20,15 +20,27 @@
 hunting <- function(t, pop, pars) {
   with(as.list(c(pars, pop)), {
     
-      # Hunt loss computation only occurs if prey exceeds threshold, cannot exceed pop
-      hunt_loss <- if (prey >= prey_thresh) {
-          min(beta * hunters * prey, prey)
-      } else {
-          0
-      }
     
-    dprey <- rprey * (1 - prey / K) * prey - alpha * prey * pred - hunt_loss
+    if (prey < prey_thresh) {
+      hunting <- 0
+      } else {
+      hunting <- beta * hunters * prey
+    }
+      
+    dprey <- rprey * (1 - prey / K) * prey - alpha * prey * pred - hunting
     dpred <- eff * alpha * prey * pred - pmort * pred
     return(list(c(dprey, dpred)))
+    
   })
 }
+# lotvmod_hunting <- function(t, pop, pars) {
+#   with(as.list(c(pars, pop)), {
+#     
+#     hunting <- if (prey >= prey_thresh) beta * hunters * prey
+#     else 0 
+#     
+#     dprey <- rprey * (1 - prey / K) * prey - alpha * prey * pred - hunting
+#     dpred <- eff * alpha * prey * pred - pmort * pred
+#     return(list(c(dprey, dpred)))
+#   })
+# }

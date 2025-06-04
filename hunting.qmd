@@ -6,6 +6,8 @@ editor_options:
   chunk_output_type: console
 ---
 
+First things first, we read in our libraries
+
 ```{r}
 library(here)
 library(dplyr)
@@ -15,14 +17,16 @@ library(sensitivity)
 library(purrr)
 library(deSolve)
 library(lhs)
-
+library(patchwork)
 ```
+Now, we source our new hunting function - the modified Lotka-Voltera Model with the addition of the predator prey interactions
 
 ```{r}
-source(here('hunting.R'))
+source('hunting.R')
 ```
 
 
+Now, we can try out our different hunting values. I'm starting with the original code from the `PredPrey.qmd` document. 
 
 ```{r}
 # note the use of with
@@ -33,40 +37,38 @@ currpop <- c(prey = 10, pred = 1)
 days <- seq(from = 1, to = 100, by = 1)
 
 # set parameters
-pars <- c(rprey = 0.95, alpha = 0.01, eff = 0.6, pmort = 0.4, K = 2000, beta = 0.5, hunters = 1, prey_thresh = 2)
+pars <- c(rprey = 0.95, alpha = 0.01, eff = 0.6, pmort = 0.4, K = 2000, beta = 0.5, hunters = 1.5, prey_thresh = 2)
 
 # run the model
-res <- ode(func = hunting, y = currpop, times = days, parms = pars)
+res1 <- ode(func = hunting, y = currpop, times = days, parms = pars)
 
 # extract final values
-final <- as.data.frame(res) |>  tail(1)
+final <- as.data.frame(res1) |>  tail(1)
 final
 
 # Assuming that 5 is a stable level?
 stability <- final$prey > 5 & final$pred > 5
 
 
-# graph the results
-head(res)
+
 # rearrange for easy plotting
-resl <- as.data.frame(res) %>% pivot_longer(-time, names_to = "animal", values_to = "pop")
-p1 <- ggplot(resl, aes(time, pop, col = animal)) +
-  geom_line()
+resl <- as.data.frame(res1) %>% pivot_longer(-time, names_to = "animal", values_to = "pop")
 
-p1
+hunters_1 <- ggplot(resl, aes(time, pop, col = animal)) +
+  geom_line() +
+  theme_minimal() +
+  labs(title = "Hunters = 1.5")
 
-p2 <- ggplot(as.data.frame(res), aes(pred, prey)) +
+
+ggplot(as.data.frame(res1), aes(pred, prey)) +
   geom_point() +
   labs(y = "Prey", x = "Predators")
-p2
 
 # To make this easier to understand - maybe
-p2b <- ggplot(as.data.frame(res), aes(pred, prey, col = time)) +
+ggplot(as.data.frame(res1), aes(pred, prey, col = time)) +
   geom_point() +
   labs(y = "Prey", x = "Predators")
-p2b
 
-ggpubr::ggarrange(p1, p2b)
 ```
 Using the hunting model, we tested different hunting levels using the beta and hunters parameters. Each simulation was run for 100 days using the `ode()` function from the `deSolve` package, with a consistent set of initial conditions:
 
@@ -74,8 +76,60 @@ Using the hunting model, we tested different hunting levels using the beta and h
 currpop <- c(prey = 10, pred = 1)
 ```
 
-We define stability as both prey and predator populations remaining above 5 individuals at the end of the simulation (t=100). This ensures that both species avoid extinction. We tested this to see at the 100th day, if the populations were stable.
+To determine stability, we will look at different predator populations in regard to the prey ensuring species avoid extinction. We tested this to see the sustainable hunting level, if the populations were stable. 
 
 
+```
 
+Now, let's lessen the hunters value and see how the model responds. 
+
+
+```{r}
+# set parameters
+pars <- c(rprey = 0.95, alpha = 0.01, eff = 0.6, pmort = 0.4, K = 2000, beta = 0.5, hunters = 0.5, prey_thresh = 2)
+
+# run the model
+res2 <- ode(func = hunting, y = currpop, times = days, parms = pars)
+
+# rearrange for easy plotting
+resl <- as.data.frame(res2) %>% pivot_longer(-time, names_to = "animal", values_to = "pop")
+hunters_0.5 <- ggplot(resl, aes(time, pop, col = animal)) +
+  geom_line() +
+  theme_minimal() +
+  labs(title = "Hunters = 0.5")
+
+ggplot(as.data.frame(res2), aes(pred, prey)) +
+  geom_point() +
+  labs(y = "Prey", x = "Predators")
+```
+
+Now, let's increase the hunters value even more and see how the model responds. 
+
+```{r}
+# set parameters
+pars <- c(rprey = 0.95, alpha = 0.01, eff = 0.6, pmort = 0.4, K = 2000, beta = 0.5, hunters = 2, prey_thresh = 2)
+
+# run the model
+res3 <- ode(func = hunting, y = currpop, times = days, parms = pars)
+
+# rearrange for easy plotting
+resl <- as.data.frame(res3) %>% pivot_longer(-time, names_to = "animal", values_to = "pop")
+hunters_2 <- ggplot(resl, aes(time, pop, col = animal)) +
+  geom_line() +
+  theme_minimal() +
+  labs(title = "Hunters = 2")
+
+
+ggplot(as.data.frame(res3), aes(pred, prey)) +
+  geom_point() +
+  labs(y = "Prey", x = "Predators")
+```
+
+Now, let's put all of the results plots together for the various hunters values (0.5, 1, and 2)
+
+```{r}
+hunters_0.5 + hunters_1 + hunters_2
+```
+
+An estimated sustainable hunting level these visualizations show is 1.5 hunters at the most sustainable level. Adding hunters over time diminish predator-prey populations with the prey threshold, so having a threshold of 2 prey and 2 hunters greatly plummets both the competition groups. 
 
